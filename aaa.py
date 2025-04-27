@@ -8,6 +8,7 @@ import numpy as np
 from PIL import ImageGrab
 import keyboard  # キーボードイベントを監視するためのライブラリ
 import threading  # 非同期でキーイベントを監視するために使用
+import sys
 
 pyocr.tesseract.TESSERACT_CMD = r'C:\\Program Files\\Tesseract-OCR\\tesseract.exe'
 
@@ -15,13 +16,14 @@ pyocr.tesseract.TESSERACT_CMD = r'C:\\Program Files\\Tesseract-OCR\\tesseract.ex
 class ScreenCaptureApp:
     def __init__(self, root):
         self.root = root
+       
         self.root.attributes("-fullscreen", True)
         self.root.attributes("-alpha", 0.3)  # 透明度を少し下げる
         self.start_x = self.start_y = self.end_x = self.end_y = None
         
         self.canvas = tk.Canvas(root, cursor="cross")
         self.canvas.pack(fill=tk.BOTH, expand=True)
-
+        self.root.deiconify()
         self.canvas.bind("<ButtonPress-1>", self.on_press)
         self.canvas.bind("<B1-Motion>", self.on_drag)
         self.canvas.bind("<ButtonRelease-1>", self.on_release)
@@ -35,10 +37,14 @@ class ScreenCaptureApp:
         self.canvas.create_rectangle(self.start_x, self.start_y, self.end_x, self.end_y, outline="black", tag="rect", fill="blue")
 
     def on_release(self, event):
-        self.root.quit()  # 終了
+        print("on_release1")
+        # self.root.quit()  # 終了
+        # print("on_release2")
         self.capture_screen()
-        # self.canvas.delete("rect")  # 矩形を削除
-        # print("選択が完了しました。再度選択できます。
+        print("on_release2")
+        self.canvas.delete("rect")  # 矩形を削除
+        print("選択が完了しました。再度選択できます。")
+        self.root.destroy()
     def capture_screen(self):
         img = pyautogui.screenshot(region=(self.start_x, self.start_y, self.end_x - self.start_x, self.end_y - self.start_y))
         # Tesseractのパス設定（Windowsの場合）
@@ -60,20 +66,23 @@ class ScreenCaptureApp:
 
 
 def monitor_keys():
-    """Shift + スペースが押されたらスクリーンショットを開始"""
+    """Shift + Altが押されたらスクリーンショットを開始"""
+    print("define")
     while True:
-        if keyboard.is_pressed("shift") and keyboard.is_pressed("space"):
+        if keyboard.is_pressed("shift") and keyboard.is_pressed("alt"):
             print("スクリーンショットを開始します...")
             root = tk.Tk()
             app = ScreenCaptureApp(root)
             root.mainloop()
-
+        elif keyboard.is_pressed("esc"):
+            print("ｱﾌﾟﾘｹｰｼｮﾝを終了します。")
+            sys.exit(0)
 
 if __name__ == "__main__":
     # キーボード監視を別スレッドで実行
-    key_thread = threading.Thread(target=monitor_keys, daemon=True)
-    key_thread.start()
-
-    print("アプリは常時起動しています。Shift + スペースを押してスクリーンショットを開始してください。")
+    # key_thread = threading.Thread(target=monitor_keys, daemon=True)
+    # key_thread.start()
+    monitor_keys()
+    print("アプリは常時起動しています。Shift + Altを押してスクリーンショットを開始してください。")
     while True:
         pass  # メインスレッドを終了させない
